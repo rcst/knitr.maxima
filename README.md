@@ -1,6 +1,6 @@
 ---
 title: A knitr engine for maxima
-output: github_document
+output: rmarkdown::github_document
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
