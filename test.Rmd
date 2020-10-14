@@ -1,0 +1,37 @@
+---
+title: |
+   | Maxima Chunk Test Document 
+output: 
+   pdf_document: 
+      fig_caption: yes
+author:
+- Eric Stemmler
+date: "`r format(Sys.time(), '%D')`"
+---
+
+```{r}
+library(knitr)
+source("maxima.R")
+
+knit_engines$set(maxima = maxima)
+```
+
+```{maxima, engine.opts = list(latex = FALSE)}
+f(x) := x^2$
+f(2);
+```
+
+```{maxima, engine.opts = list(latex=TRUE)}
+f(x) := x^2
+'f(2) = f(2)
+J = jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])
+```
+
+which yields the jacobian
+
+```{maxima, engine.opts = list(latex = TRUE)}
+det(J) = determinant(jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])) 
+
+det(J) = factor(determinant(jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])))
+```
+
