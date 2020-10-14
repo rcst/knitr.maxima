@@ -1,5 +1,12 @@
-A knitr engine for maxima
-=========================
+---
+title: A knitr engine for maxima
+output: github_document 
+keep_md: true
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -11,7 +18,8 @@ This engine can be used to process maxima code within Markdown documents.
 
 To use it, one needs to register the function `maxima` in the file maxima.R as a knitr engine at the beginning of ones \*.Rmd file
 
-`
+
+```r
 source("maxima.R")
 knit_engine$set(maxima = maxima)
-`
+```
