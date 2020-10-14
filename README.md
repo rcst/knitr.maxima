@@ -1,6 +1,8 @@
 A knitr engine for maxima
 ================
 
+# Description
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 The R-package knitr already supports *many* programming languages to be
@@ -19,6 +21,8 @@ own engine for processing code that is not supported.
 This engine can be used to process maxima code within Markdown
 documents.
 
+# Usage
+
 To use it, one needs to register the function `maxima` in the file
 maxima.R as a knitr engine at the beginning of ones \*.Rmd file
 
@@ -26,3 +30,13 @@ maxima.R as a knitr engine at the beginning of ones \*.Rmd file
 source("maxima.R")
 knit_engines$set(maxima = maxima)
 ```
+
+# Requirements
+
+  - `library(TexCheckR)`
+  - `library(data.table)`
+
+# To Do
+
+  - implement the engine output via source and output hooks
+    (`knt_hooks$set...`)

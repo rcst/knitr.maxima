@@ -1,8 +1,8 @@
-# the below code is from Hugh:
+# the code of locate_over and over2frac is from Hugh:
 # https://stackoverflow.com/questions/48492200/latex-expression-replacement-in-r
 
-library(data.table) # for shift
-library(TeXCheckR)  # for parse_tex
+require(data.table) # for shift
+require(TeXCheckR)  # for parse_tex
 
 locate_over <- function(doc_parsed) {
   lead <- function(x, n) data.table::shift(x, n = n, type = "lead", fill = "")
@@ -45,49 +45,75 @@ maxima <- function(options) {
 	code <- paste(options$code, collapse = "\n")
 	prg <- Sys.which("maxima")
 
-	# input echo formatting
-
-	# output formatting 
-	# insert newline before each (%i|ox)
-
 	if(options$engine.opts$latex == TRUE) {
-		# delete trailling ";" or "$"
-		latex_code <- gsub(x = options$code,
-				   pattern = "(\\$|;)$",
-				   replacement = "")
+		lc <- options$code
 
-		# remoce empty lines
-		latex_code <- latex_code[nchar(latex_code) > 0]
+		# # delete trailling ";" or "$"
+		# latex_code <- gsub(x = options$code,
+		# 		   pattern = "(\\$|;)$",
+		# 		   replacement = "")
 
-		# wrapp each code line into tex()
-		latex_code <- gsub(x = latex_code,
-				   pattern = "^([[:print:]]*)$",
-				   replacement = "tex(\\1)")
+		# remove empty lines
+		lc <- lc[nchar(lc) > 0]
+
+		# wrap each code line into tex() maintaining trailing ; or $ 
+		lc <- gsub(x = lc,
+				   pattern = "^([[:print:]]*)(;|\\$){1}$",
+				   replacement = "tex(\\1)\\2")
 
 		# join each code line into one string
-		latex_code <- paste0(latex_code, separator = "$", collapse = "")
+		lc <- paste0(lc, collapse = "")
 
 		# send code to maxima 
-		out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(latex_code)), intern = TRUE)
+		out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(lc)), intern = TRUE)
 
-		# remove each line that echos input
-		out <- gsub(x = out,
-			    pattern = "^\\(%(i|o)[[:digit:]]*\\)[[:print:]]*$",
-			    replacement = "")
+		# handle maxima returning code with line breaks
+		# if a line in out starts with an white space then concatenate it
+		# with its predecessor
+		lbs <- grepl(x = out, 
+			     pattern = "^\\s+")
+
+		for(i in length(lbs):2){
+			if(lbs[i] == TRUE){
+				out[i] <- gsub(x = out[i], pattern = "^\\s+", replacement = "")
+				out[i-1] <- paste0(out[i-1], out[i])
+				out[i] <- ""
+			}
+		}
+
+		# remove each line that echos input or echo marked code
+		if(options$echo == FALSE){ 
+			out <- gsub(x = out, 
+				    pattern = "^\\(%(i|o)[[:digit:]]*\\)[[:print:]]*$", 
+				    replacement = "")
+		} else {
+			# output original code lines instead of tex()-wrapped ones
+			# i.e. remove tex()-wrapping
+			out <- gsub(x = out,
+				    pattern = "^(\\(%i[[:digit:]]+\\)) tex\\(([[:print:]]+)\\)",
+				    replacement = "\\1 \\2")
+
+			out <- gsub(x = out,
+				    pattern = "^\\(%o[[:digit:]]*\\)[[:print:]]*$", 
+				    replacement = "")
+
+			out <- gsub(x = out,
+				    pattern = "^(\\(%i[[:digit:]]*\\)[[:print:]]*)$", 
+				    replacement = "```\\1```")
+
+
+			# handle when tex decides too verbatim a command, i.e. when it contains ":="
+
+			# handle too long lines
+
+
+		}
 
 		# remove empty lines
 		out <- out[nchar(out) > 0]
 
 		# replace \over with \frac commands
 		out <- over2frac(lines = paste(out, collapse = "\n"))
-
-		# replace greek letter with their latex commands
-		# out <- gsub(x = out,
-		# 	    pattern = "alpha",
-		# 	    replacement = "\\alpha")
-
-		browser()
-
 	}
 	else { 
 		out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(code)), intern = TRUE)
@@ -103,5 +129,8 @@ maxima <- function(options) {
 	# else
 	# 	paste(out, collapse = "\n")
 
-	# paste(c(code, out))
+	# browser()
+
+	engine_output(options, code = "1+1", out = "[1] 2")
+	out
 }
