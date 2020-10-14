@@ -1,8 +1,6 @@
 ---
 title: A knitr engine for maxima
-output: 
-   html_document: 
-      keep_md: true
+output: github_document
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -22,5 +20,5 @@ To use it, one needs to register the function `maxima` in the file maxima.R as a
 
 ```r
 source("maxima.R")
-knit_engine$set(maxima = maxima)
+knit_engines$set(maxima = maxima)
 ```
