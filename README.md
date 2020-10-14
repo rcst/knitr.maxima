@@ -1,9 +1,9 @@
 ---
 title: "A knitr engine for maxima"
-output: rmarkdown::github_document
+author: Eric Stemmler
+date: 10.10.2020
+output: github_document
 ---
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
 
 
