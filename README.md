@@ -1,5 +1,5 @@
 ---
-title: A knitr engine for maxima
+title: "A knitr engine for maxima"
 output: rmarkdown::github_document
 ---
 
