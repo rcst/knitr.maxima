@@ -1,7 +1,5 @@
 A knitr engine for maxima
 ================
-Eric Stemmler
-10.10.2020
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
