@@ -12,6 +12,6 @@ This engine can be used to process maxima code within Markdown documents.
 To use it, one needs to register the function `maxima` in the file maxima.R as a knitr engine at the beginning of ones \*.Rmd file
 
 `
-source("maxima.R")
+source("maxima.R")\n
 knit_engine$set(maxima = maxima)
 `
