@@ -1,7 +1,8 @@
 ---
 title: A knitr engine for maxima
-output: github_document 
-keep_md: true
+output: 
+   html_document: 
+      keep_md: true
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
