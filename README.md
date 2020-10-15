@@ -38,5 +38,9 @@ knit_engines$set(maxima = maxima)
 
 # To Do
 
-  - implement the engine output via source and output hooks
-    (`knt_hooks$set...`)
+  - printing certain matrices doesn’t work, i.e. latex throws an error.
+    This is because of TeX commands that fail in LaTeX
+  - chunk option eval doesn’t have any effect
+  - using “%” to reuse the last command doesn’t work
+  - putting lines breakes into the code chunk to avoid overflow of the
+    echoed code chunk results in an maxima error

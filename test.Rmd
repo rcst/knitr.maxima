@@ -1,9 +1,12 @@
 ---
 title: |
    | Maxima Chunk Test Document 
+header-includes:
+   - \usepackage{plain}
 output: 
    pdf_document: 
       fig_caption: yes
+      keep_md: true
 author:
 - Eric Stemmler
 date: "`r format(Sys.time(), '%D')`"
@@ -11,27 +14,19 @@ date: "`r format(Sys.time(), '%D')`"
 
 ```{r}
 library(knitr)
-source("maxima.R")
 
+source("maxima.R")
 knit_engines$set(maxima = maxima)
 ```
 
-```{maxima, engine.opts = list(latex = FALSE)}
-f(x) := x^2$
-f(2);
+```{maxima, eval = FALSE}
+f(x) := (x^2 + exp(x^2));
+'f(2) = f(2);
+J = jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta]);
+det(J) = determinant(%);
 ```
+which can be simplified to 
 
-```{maxima, engine.opts = list(latex=TRUE)}
-f(x) := x^2
-'f(2) = f(2)
-J = jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])
+```{maxima}
+factor(determinant(jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])));
 ```
-
-which yields the jacobian
-
-```{maxima, engine.opts = list(latex = TRUE)}
-det(J) = determinant(jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])) 
-
-det(J) = factor(determinant(jacobian([alpha / (alpha + beta), 1 / sqrt(alpha + beta)], [alpha, beta])))
-```
-

@@ -1,8 +1,10 @@
+
 # the code of locate_over and over2frac is from Hugh:
 # https://stackoverflow.com/questions/48492200/latex-expression-replacement-in-r
 
 require(data.table) # for shift
 require(TeXCheckR)  # for parse_tex
+require(stringr)
 
 locate_over <- function(doc_parsed) {
   lead <- function(x, n) data.table::shift(x, n = n, type = "lead", fill = "")
@@ -41,96 +43,155 @@ over2frac <- function(lines, verbose = FALSE) {
   out
 }
 
-maxima <- function(options) {
-	code <- paste(options$code, collapse = "\n")
+maxima <- function(options) { 
 	prg <- Sys.which("maxima")
+	code <- options$code
 
-	if(options$engine.opts$latex == TRUE) {
-		lc <- options$code
+	# remove empty lines
+	mcode <- code[nchar(code) > 0]
 
-		# # delete trailling ";" or "$"
-		# latex_code <- gsub(x = options$code,
-		# 		   pattern = "(\\$|;)$",
-		# 		   replacement = "")
+	# replacement definitions ":=" with "="
+	iapp <- which(grepl(x = mcode, pattern = ":=") == TRUE, arr.ind = TRUE)
 
-		# remove empty lines
-		lc <- lc[nchar(lc) > 0]
+	browser()
 
+	if(length(iapp) > 0) { 
+		mcode <- append(x = mcode, values = mcode[iapp], after = iapp) 
+		mcode[iapp] <- gsub(x = mcode[iapp], 
+				    pattern = "([[:print:]]+):=([[:print:]])", 
+				    replacement = "\\1=\\2") 
+		
 		# wrap each code line into tex() maintaining trailing ; or $ 
-		lc <- gsub(x = lc,
-				   pattern = "^([[:print:]]*)(;|\\$){1}$",
-				   replacement = "tex(\\1)\\2")
+		mcode[-(iapp+1)] <- gsub(x = mcode[-(iapp+1)], 
+					 pattern = "^([[:print:]]*)(;|\\$){1}$", 
+					 replacement = "tex(\\1)\\2")
 
-		# join each code line into one string
-		lc <- paste0(lc, collapse = "")
+		# surpress output from inserted code
+		mcode[iapp+1] <- gsub(x = mcode[iapp+1],
+				      pattern = "^([[:print:]]+)\\;$",
+				      replacement = "\\1$")
 
-		# send code to maxima 
-		out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(lc)), intern = TRUE)
+	} else {
+		# wrap each code line into tex() maintaining trailing ; or $ 
+		mcode <- gsub(x = mcode, 
+			      pattern = "^([[:print:]]*)(;|\\$){1}$", 
+			      replacement = "tex(\\1)\\2")
+	}
 
-		# handle maxima returning code with line breaks
-		# if a line in out starts with an white space then concatenate it
+	# join each code line into one string
+	mcode <- paste0(mcode, collapse = "")
+
+	# send code to maxima 
+	out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(mcode)), intern = TRUE)
+
+	# options$engine <- "r"
+
+	engine_output(options, code, out)
+}
+
+local({ 
+	hook_old <- knitr::knit_hooks$get("source")
+	knitr::knit_hooks$set(source = function(x, options) {
+		hook_old(x, options)
+	})
+
+})
+ 
+local({ 
+	hook_old <- knitr::knit_hooks$get("output")
+	knitr::knit_hooks$set(output = function(x, options) { 
+
+		# split string into single output lines
+		x <- unlist(str_split(string = x, pattern = "\\n"))
+		x <- gsub(x = x, pattern = "#{0,2} ", replacement = "")
+
+		# if a line doesn't start with a ( or $$ then it is to be joined with it's predecessor
+		eqb <- grepl(x = x, pattern = "^\\${2}")
+		eqe <- grepl(x = x, pattern = "\\${2}$")
+
+		lbs <- rev(cumsum(rev(eqb-eqe)))
+
+		lbs <- ifelse(lbs == 0, FALSE, TRUE)
+
+		# handle maxima returning code with line breaks 
+		# if a line in out starts with an white space then concatenate it 
 		# with its predecessor
-		lbs <- grepl(x = out, 
-			     pattern = "^\\s+")
-
 		for(i in length(lbs):2){
 			if(lbs[i] == TRUE){
-				out[i] <- gsub(x = out[i], pattern = "^\\s+", replacement = "")
-				out[i-1] <- paste0(out[i-1], out[i])
-				out[i] <- ""
+				x[i] <- gsub(x = x[i], pattern = "^\\s+", replacement = "")
+				x[i-1] <- paste0(x[i-1], x[i])
+				x[i] <- ""
 			}
 		}
 
-		# remove each line that echos input or echo marked code
-		if(options$echo == FALSE){ 
-			out <- gsub(x = out, 
-				    pattern = "^\\(%(i|o)[[:digit:]]*\\)[[:print:]]*$", 
-				    replacement = "")
-		} else {
-			# output original code lines instead of tex()-wrapped ones
-			# i.e. remove tex()-wrapping
-			out <- gsub(x = out,
-				    pattern = "^(\\(%i[[:digit:]]+\\)) tex\\(([[:print:]]+)\\)",
-				    replacement = "\\1 \\2")
-
-			out <- gsub(x = out,
-				    pattern = "^\\(%o[[:digit:]]*\\)[[:print:]]*$", 
-				    replacement = "")
-
-			out <- gsub(x = out,
-				    pattern = "^(\\(%i[[:digit:]]*\\)[[:print:]]*)$", 
-				    replacement = "```\\1```")
-
-
-			# handle when tex decides too verbatim a command, i.e. when it contains ":="
-
-			# handle too long lines
-
-
+		# count parenthesis "(" = 1, ")" = -1
+		d <- str_count(string = x, pattern = "\\(") - str_count(string = x, pattern = "\\)")
+		d <- rev(cumsum(rev(d)))
+		lbs <- ifelse(d == 0, FALSE, TRUE)
+		for(i in length(lbs):2){
+			if(lbs[i] == TRUE){
+				x[i] <- gsub(x = x[i], pattern = "^\\s+", replacement = "")
+				x[i-1] <- paste0(x[i-1], x[i])
+				x[i] <- ""
+			}
 		}
 
+
+		x <- gsub(x = x, 
+			  pattern = "^\\(%(i|o)[[:digit:]]*\\)[[:print:]]*$", 
+			  replacement = "")
+
+		# remove each line that echos input or echo marked code
+		# if(options$echo == FALSE){ 
+		# 	x <- gsub(x = x, 
+		# 		  pattern = "^\\(%(i|o)[[:digit:]]*\\)[[:print:]]*$", 
+		# 		  replacement = "")
+		# } else {
+		# 	# output original code lines instead of tex()-wrapped ones
+		# 	# i.e. remove tex()-wrapping
+		# 	x <- gsub(x = x,
+		# 		    pattern = "^(\\(%i[[:digit:]]+\\)) tex\\(([[:print:]]+)\\)",
+		# 		    replacement = "\\1 \\2")
+
+		# 	x <- gsub(x = x, 
+		# 		  pattern = "^\\(%o[[:digit:]]*\\)[[:print:]]*$", 
+		# 		  replacement = "")
+
+		# 	# out <- gsub(x = out,
+		# 	# 	    pattern = "^(\\(%i[[:digit:]]*\\)[[:print:]]*)$", 
+		# 	# 	    replacement = "```\\1```")
+
+
+		# 	# handle when tex decides too verbatim a command, i.e. when it contains ":="
+
+		# 	# handle too long lines
+		# }
+
 		# remove empty lines
-		out <- out[nchar(out) > 0]
+		x <- x[nchar(x) > 0]
+
+		# x <- gsub(x = x, pattern = "^\\${2}", replacement = "\n\\$\\$")
+		# x <- gsub(x = x, pattern = "\\${2}$", replacement = "\\$\\$\n")
 
 		# replace \over with \frac commands
-		out <- over2frac(lines = paste(out, collapse = "\n"))
-	}
-	else { 
-		out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(code)), intern = TRUE)
-	} 
-	
-	# out <- gsub(pattern = "([[:print:]]*)(\\(\\%(i|o)[[:digit:]]+\\))", 
-	# 		    replacement = "\\1\n\\2", 
-	# 		    x = out)
+		x <- over2frac(lines = paste(x, collapse = "\n"))
 
-	# if(options$echo == TRUE) 
-	# 	if(options$engine.opts$latex == TRUE)
-	# 	paste(c(code, out), collapse = "\n")
-	# else
-	# 	paste(out, collapse = "\n")
+		# browser()
 
-	# browser()
+		# wrapp each TeX line in \begin{plain}
 
-	engine_output(options, code = "1+1", out = "[1] 2")
-	out
-}
+		# x <- gsub(x = x,
+		# 	  pattern = "^\\${2}([[:print:]]*)\\${2}$",
+		# 	  replacement = "$$\\\\begin{plain}\\1\\\\end{plain}$$")
+
+		# replace TeX command \it with \textit{}
+		x <- gsub(x = x,
+			  pattern = "\\{[[:print:]]+\\it([[:print:]]*)\\}",
+			  replacement = "\\\\textit\\{\\1\\}")
+
+		x <- paste(x, collapse = "\n")
+
+		# this causes the everything to get wrapped in a code chunk
+		# h <- hook_old(x, options)
+	})
+})
