@@ -53,8 +53,6 @@ maxima <- function(options) {
 	# replacement definitions ":=" with "="
 	iapp <- which(grepl(x = mcode, pattern = ":=") == TRUE, arr.ind = TRUE)
 
-	browser()
-
 	if(length(iapp) > 0) { 
 		mcode <- append(x = mcode, values = mcode[iapp], after = iapp) 
 		mcode[iapp] <- gsub(x = mcode[iapp], 
