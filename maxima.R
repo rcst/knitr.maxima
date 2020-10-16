@@ -47,42 +47,35 @@ maxima <- function(options) {
 	prg <- Sys.which("maxima")
 	code <- options$code
 
+	browser()
+
+
 	# remove empty lines
 	mcode <- code[nchar(code) > 0]
 
 	# replacement definitions ":=" with "="
-	iapp <- which(grepl(x = mcode, pattern = ":=") == TRUE, arr.ind = TRUE)
+	# update: this can be easily abandonded by putting the following maxima command
+	# at the beginnging of each code chunk
+	# set_tex_environment (":=", "$$", "$$")$
+	# iapp <- which(grepl(x = mcode, pattern = ":=") == TRUE, arr.ind = TRUE)
 
-	if(length(iapp) > 0) { 
-		mcode <- append(x = mcode, values = mcode[iapp], after = iapp) 
-		mcode[iapp] <- gsub(x = mcode[iapp], 
-				    pattern = "([[:print:]]+):=([[:print:]])", 
-				    replacement = "\\1=\\2") 
-		
-		# wrap each code line into tex() maintaining trailing ; or $ 
-		mcode[-(iapp+1)] <- gsub(x = mcode[-(iapp+1)], 
-					 pattern = "^([[:print:]]*)(;|\\$){1}$", 
-					 replacement = "tex(\\1)\\2")
+	# wrap each code line into tex() maintaining trailing ; or $ 
+	mcode <- gsub(x = mcode, 
+		      pattern = "^([[:print:]]*)(;|\\$){1}$", 
+		      replacement = "tex(\\1)\\2")
 
-		# surpress output from inserted code
-		mcode[iapp+1] <- gsub(x = mcode[iapp+1],
-				      pattern = "^([[:print:]]+)\\;$",
-				      replacement = "\\1$")
+	# load mactex-utilities: loads an alternative tex function 
+	# that output latex compatible matrix environment and different quotients
+	code <- append(x = code, values = "load(\"mactex-utilities\")$", 0)
 
-	} else {
-		# wrap each code line into tex() maintaining trailing ; or $ 
-		mcode <- gsub(x = mcode, 
-			      pattern = "^([[:print:]]*)(;|\\$){1}$", 
-			      replacement = "tex(\\1)\\2")
-	}
+	# set_tex_environment (":=", "$$", "$$")$
+	# code <- append(x = code, value = "set_tex_environment(\":=\", \"$$\", \"$$\")$", 0)
 
 	# join each code line into one string
 	mcode <- paste0(mcode, collapse = "")
 
 	# send code to maxima 
 	out <- system(paste0(prg, " -q ", " --batch-string=", shQuote(mcode)), intern = TRUE)
-
-	# options$engine <- "r"
 
 	engine_output(options, code, out)
 }
@@ -172,7 +165,7 @@ local({
 		# x <- gsub(x = x, pattern = "\\${2}$", replacement = "\\$\\$\n")
 
 		# replace \over with \frac commands
-		x <- over2frac(lines = paste(x, collapse = "\n"))
+		# x <- over2frac(lines = paste(x, collapse = "\n"))
 
 		# browser()
 
@@ -183,9 +176,9 @@ local({
 		# 	  replacement = "$$\\\\begin{plain}\\1\\\\end{plain}$$")
 
 		# replace TeX command \it with \textit{}
-		x <- gsub(x = x,
-			  pattern = "\\{[[:print:]]+\\it([[:print:]]*)\\}",
-			  replacement = "\\\\textit\\{\\1\\}")
+		# x <- gsub(x = x,
+		# 	  pattern = "\\{[[:print:]]+\\it([[:print:]]*)\\}",
+		# 	  replacement = "\\\\textit\\{\\1\\}")
 
 		x <- paste(x, collapse = "\n")
 

@@ -38,9 +38,14 @@ knit_engines$set(maxima = maxima)
 
 # To Do
 
-  - printing certain matrices doesn’t work, i.e. latex throws an error.
-    This is because of TeX commands that fail in LaTeX
   - chunk option eval doesn’t have any effect
   - using “%” to reuse the last command doesn’t work
   - putting lines breakes into the code chunk to avoid overflow of the
     echoed code chunk results in an maxima error
+  - silently insert maxima command set\_tex\_enviroment(“:=”,
+    “\[", "\]”) at the beginning of each code chunk –\> has no
+    effect after loading mactex-utilities …
+  - wrap whole code chunk output in
+    instead of individually
+  - check this out:
+    <https://rdrr.io/github/skranz/LyxMaxima/man/convert.maxima.output.html>
