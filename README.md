@@ -21,6 +21,22 @@ own engine for processing code that is not supported.
 This engine can be used to process maxima code within Markdown
 documents.
 
+# Features
+
+  - knitr.maxima sends maxima commands to and retrieves respective
+    output from the maxima interpreter
+  - each maxima command is automatically wrapped in a tex(…) command and
+    is appropriatley formatted for output as 
+  - “%” can be used as if working within maxima nonetheless, i.e. it is
+    replaced by the previous command
+  - each chunk is executed in a separate maxima session, i.e. variables
+    and functions defined in a preceeding code chunk are not carried
+    over to the next chunk
+
+# Limitations
+
+  - “%” only work one step back
+
 # Usage
 
 To use it, one needs to register the function `maxima` in the file
@@ -33,19 +49,10 @@ knit_engines$set(maxima = maxima)
 
 # Requirements
 
-  - `library(TexCheckR)`
-  - `library(data.table)`
-
 # To Do
 
   - chunk option eval doesn’t have any effect
-  - using “%” to reuse the last command doesn’t work
-  - putting lines breakes into the code chunk to avoid overflow of the
-    echoed code chunk results in an maxima error
-  - silently insert maxima command set\_tex\_enviroment(“:=”,
-    “\[", "\]”) at the beginning of each code chunk –\> has no
-    effect after loading mactex-utilities …
-  - wrap whole code chunk output in
-    instead of individually
   - check this out:
     <https://rdrr.io/github/skranz/LyxMaxima/man/convert.maxima.output.html>
+  - “%” should work the same way as in maxima (chaining arbitraily many
+    commands)

@@ -47,11 +47,24 @@ maxima <- function(options) {
 	prg <- Sys.which("maxima")
 	code <- options$code
 
-	browser()
-
-
 	# remove empty lines
 	mcode <- code[nchar(code) > 0]
+
+	# count parenthesis "(" = 1, ")" = -1
+	if(length(mcode) > 1) { 
+		d <- str_count(string = mcode, pattern = "\\(") - str_count(string = mcode, pattern = "\\)")
+		d <- rev(cumsum(rev(d)))
+		lbs <- ifelse(d == 0, FALSE, TRUE)
+		for(i in length(lbs):2){
+			if(lbs[i] == TRUE){
+				mcode[i] <- gsub(x = mcode[i], pattern = "^\\s+", replacement = "")
+				mcode[i-1] <- paste0(mcode[i-1], mcode[i])
+				mcode[i] <- ""
+			}
+		}
+	mcode <- mcode[!lbs]
+	}
+
 
 	# replacement definitions ":=" with "="
 	# update: this can be easily abandonded by putting the following maxima command
@@ -59,6 +72,21 @@ maxima <- function(options) {
 	# set_tex_environment (":=", "$$", "$$")$
 	# iapp <- which(grepl(x = mcode, pattern = ":=") == TRUE, arr.ind = TRUE)
 
+	# check for "%" to reuse previous input line
+	# i.e. replace "%" with previous input line
+	iprct <- which(grepl(x = mcode, pattern = "\\%") == TRUE, arr.ind = TRUE)
+
+	# remove index = 1 
+	if(any(iprct == 1)) { 
+		iprct <- iprct[!(iprct == 1)]
+		mcode <- mcode[-1]
+	}
+
+	mcode[iprct] <- paste0(mcode[iprct], mcode[iprct-1])
+	mcode[iprct] <- gsub(x = mcode[iprct], 
+			     pattern = "^([[:print:]]*)\\(\\%\\)(\\;|\\$)([[:print:]]*)\\;|\\$$", 
+			     replacement = "\\1(\\3)\\2")
+	
 	# wrap each code line into tex() maintaining trailing ; or $ 
 	mcode <- gsub(x = mcode, 
 		      pattern = "^([[:print:]]*)(;|\\$){1}$", 
@@ -66,10 +94,10 @@ maxima <- function(options) {
 
 	# load mactex-utilities: loads an alternative tex function 
 	# that output latex compatible matrix environment and different quotients
-	code <- append(x = code, values = "load(\"mactex-utilities\")$", 0)
+	mcode <- append(x = mcode, values = "load(\"mactex-utilities\")$", 0)
 
 	# set_tex_environment (":=", "$$", "$$")$
-	# code <- append(x = code, value = "set_tex_environment(\":=\", \"$$\", \"$$\")$", 0)
+	mcode <- append(x = mcode, value = "set_tex_environment(\":=\", \"$$\", \"$$\")$", 0)
 
 	# join each code line into one string
 	mcode <- paste0(mcode, collapse = "")
@@ -167,8 +195,6 @@ local({
 		# replace \over with \frac commands
 		# x <- over2frac(lines = paste(x, collapse = "\n"))
 
-		# browser()
-
 		# wrapp each TeX line in \begin{plain}
 
 		# x <- gsub(x = x,
@@ -176,9 +202,9 @@ local({
 		# 	  replacement = "$$\\\\begin{plain}\\1\\\\end{plain}$$")
 
 		# replace TeX command \it with \textit{}
-		# x <- gsub(x = x,
-		# 	  pattern = "\\{[[:print:]]+\\it([[:print:]]*)\\}",
-		# 	  replacement = "\\\\textit\\{\\1\\}")
+		x <- gsub(x = x,
+			  pattern = "\\{[[:print:]]+\\it([[:print:]]*)\\}",
+			  replacement = "\\\\textit\\{\\1\\}")
 
 		x <- paste(x, collapse = "\n")
 
