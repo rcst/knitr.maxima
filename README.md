@@ -56,3 +56,11 @@ knit_engines$set(maxima = maxima)
     <https://rdrr.io/github/skranz/LyxMaxima/man/convert.maxima.output.html>
   - “%” should work the same way as in maxima (chaining arbitraily many
     commands)
+  - persistent
+    sessions
+
+# Links
+
+  - <http://maxima.sourceforge.net/docs/manual/maxima_174.html#Introduction-to-alt_002ddisplay>
+  - <https://en.wikipedia.org/wiki/List_of_computer_algebra_systems>
+  - <https://github.com/yihui/runr>

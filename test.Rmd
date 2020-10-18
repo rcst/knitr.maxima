@@ -1,6 +1,6 @@
 ---
 title: |
-   | Maxima Chunk Test Document 
+   | Maxima Engine Test Document 
 header-includes:
    - \usepackage{plain}
 output: 
@@ -8,8 +8,6 @@ output:
       fig_caption: yes
       keep_md: true
       keep_tex: true
-author:
-- Eric Stemmler
 date: "`r format(Sys.time(), '%D')`"
 ---
 
